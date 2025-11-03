@@ -726,13 +726,21 @@
     if (msg && msg.type === "PING") {
       // Respond to ping immediately to confirm content script is loaded
       sendResponse({ status: "ready" });
-      return true; // Keep channel open for async response
+      // No return true - this is a synchronous response
+      return false;
     }
     
     if (msg && msg.type === "COPY_MARKDOWN") {
-      handleCopy();
-      sendResponse({ status: "ok" });
-      return true;
+      // Handle copy asynchronously to allow clipboard operations to complete
+      (async () => {
+        try {
+          await handleCopy();
+          sendResponse({ status: "ok" });
+        } catch (error) {
+          sendResponse({ status: "error", message: error.message });
+        }
+      })();
+      return true; // Keep channel open for async response
     }
     
     return false;

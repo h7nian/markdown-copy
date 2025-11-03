@@ -165,7 +165,12 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.9 (Latest)
+### Version 1.0.10 (Latest)
+- 🐛 **Fix Message Channel Error** - Resolved "message channel closed before a response was received" error
+- ⚡ **Proper Async Handling** - PING messages now use synchronous response (return false)
+- ✅ **Improved Error Handling** - COPY_MARKDOWN properly handles async operations with try-catch
+
+### Version 1.0.9
 - 🎯 **Smart Content Detection** - Intelligently finds article content with text length validation (>200 chars)
 - 🔍 **Largest Container Fallback** - Finds largest text container when selectors fail, avoiding ads/navigation
 - 👤 **Respect User Selection** - Prioritizes user's manual selection over auto-select
