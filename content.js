@@ -117,6 +117,173 @@
       }
     });
 
+    // Math formula support - MathJax inline formulas
+    td.addRule("mathJaxInline", {
+      filter: function (node) {
+        // MathJax inline: span.mjx-math, span.MathJax, etc.
+        if (node.nodeName === "SPAN" || node.nodeName === "SCRIPT") {
+          const className = node.getAttribute("class") || "";
+          const type = node.getAttribute("type") || "";
+          return (
+            className.includes("mjx-math") ||
+            className.includes("MathJax") ||
+            type === "math/tex" ||
+            type === "math/asciimath"
+          );
+        }
+        return false;
+      },
+      replacement: function (content, node) {
+        // Try to get LaTeX from various attributes
+        const latex = 
+          node.getAttribute("data-latex") ||
+          node.getAttribute("data-formula") ||
+          node.getAttribute("data-math") ||
+          node.textContent;
+        
+        if (!latex) return content;
+        
+        // Clean up LaTeX string
+        let formula = latex.trim();
+        
+        // Check if already wrapped in $ or $$
+        if (formula.startsWith("$") && formula.endsWith("$")) {
+          return formula;
+        }
+        
+        // Check if it's a display formula (multiline or contains \\)
+        const isDisplay = formula.includes("\\\\") || formula.includes("\\begin");
+        
+        // Wrap in appropriate delimiters
+        return isDisplay ? `$$${formula}$$` : `$${formula}$`;
+      }
+    });
+
+    // Math formula support - KaTeX formulas
+    td.addRule("katexFormula", {
+      filter: function (node) {
+        const className = node.getAttribute("class") || "";
+        return (
+          className.includes("katex") ||
+          className.includes("katex-display") ||
+          className.includes("katex-html")
+        );
+      },
+      replacement: function (content, node) {
+        // Look for annotation tag that contains LaTeX
+        const annotation = node.querySelector("annotation, .katex-mathml annotation");
+        if (annotation) {
+          const latex = annotation.textContent.trim();
+          const isDisplay = node.classList.contains("katex-display");
+          return isDisplay ? `$$\n${latex}\n$$` : `$${latex}$`;
+        }
+        
+        // Fallback: try to get from data attributes
+        const latex = 
+          node.getAttribute("data-latex") ||
+          node.getAttribute("data-formula");
+        
+        if (latex) {
+          const isDisplay = node.classList.contains("katex-display");
+          return isDisplay ? `$$\n${latex}\n$$` : `$${latex}$`;
+        }
+        
+        // Last resort: return content
+        return content;
+      }
+    });
+
+    // Math formula support - MathML to LaTeX (basic conversion)
+    td.addRule("mathMLFormula", {
+      filter: "math",
+      replacement: function (content, node) {
+        // Try to get annotation (LaTeX) from MathML
+        const annotation = node.querySelector("annotation[encoding='application/x-tex']");
+        if (annotation) {
+          const latex = annotation.textContent.trim();
+          const display = node.getAttribute("display") === "block";
+          return display ? `$$\n${latex}\n$$` : `$${latex}$`;
+        }
+        
+        // Try alternative annotation encoding
+        const altAnnotation = node.querySelector("annotation");
+        if (altAnnotation) {
+          const latex = altAnnotation.textContent.trim();
+          const display = node.getAttribute("display") === "block";
+          return display ? `$$\n${latex}\n$$` : `$${latex}$`;
+        }
+        
+        // Basic MathML to LaTeX conversion for simple cases
+        const mtext = node.textContent.trim();
+        if (mtext) {
+          const display = node.getAttribute("display") === "block";
+          return display ? `$$\n${mtext}\n$$` : `$${mtext}$`;
+        }
+        
+        return content;
+      }
+    });
+
+    // Math formula support - LaTeX in script tags
+    td.addRule("latexScriptTag", {
+      filter: function (node) {
+        if (node.nodeName !== "SCRIPT") return false;
+        const type = node.getAttribute("type") || "";
+        return (
+          type === "math/tex" ||
+          type === "math/tex; mode=display" ||
+          type === "math/asciimath"
+        );
+      },
+      replacement: function (content, node) {
+        const type = node.getAttribute("type") || "";
+        const latex = node.textContent.trim();
+        
+        if (!latex) return "";
+        
+        // Check if display mode
+        const isDisplay = type.includes("mode=display");
+        
+        return isDisplay ? `$$\n${latex}\n$$` : `$${latex}$`;
+      }
+    });
+
+    // Math formula support - ChatGPT/Claude style formulas
+    td.addRule("chatGPTMath", {
+      filter: function (node) {
+        // Check for ChatGPT/Claude math spans
+        if (node.nodeName === "SPAN") {
+          const className = node.getAttribute("class") || "";
+          const dataLang = node.getAttribute("data-language") || "";
+          return dataLang === "math" || className.includes("math-inline") || className.includes("math-display");
+        }
+        return false;
+      },
+      replacement: function (content, node) {
+        const className = node.getAttribute("class") || "";
+        const latex = node.textContent.trim();
+        
+        if (!latex) return content;
+        
+        // Remove any wrapper if already present
+        let formula = latex;
+        if (formula.startsWith("$") && formula.endsWith("$")) {
+          return formula;
+        }
+        if (formula.startsWith("\\(") && formula.endsWith("\\)")) {
+          formula = formula.slice(2, -2);
+          return `$${formula}$`;
+        }
+        if (formula.startsWith("\\[") && formula.endsWith("\\]")) {
+          formula = formula.slice(2, -2);
+          return `$$\n${formula}\n$$`;
+        }
+        
+        const isDisplay = className.includes("display");
+        return isDisplay ? `$$\n${formula}\n$$` : `$${formula}$`;
+      }
+    });
+
     return td;
   }
 
