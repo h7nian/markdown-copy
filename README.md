@@ -165,7 +165,13 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.6 (Latest)
+### Version 1.0.7 (Latest)
+- 🐛 **Fix Duplicate Loading** - Prevent content script from loading multiple times
+- 💪 **Enhanced Bypass** - Stronger copy restriction bypass for CSDN and similar sites
+- 🛡️ Block new copy-prevention listeners with addEventListener override
+- ⚡ Improved compatibility and reliability
+
+### Version 1.0.6
 - 🔓 **Bypass Copy Restrictions** - Overcome CSS and JavaScript copy/selection blocks
 - 🎯 Remove `user-select: none` CSS restrictions
 - ✨ Disable copy/contextmenu event listeners

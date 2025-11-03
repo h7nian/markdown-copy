@@ -4,6 +4,13 @@
 (function () {
   'use strict';
 
+  // Prevent multiple initialization
+  if (window.__markdownCopyInitialized) {
+    console.log('Markdown Copy already initialized, skipping duplicate load');
+    return;
+  }
+  window.__markdownCopyInitialized = true;
+
   // Default settings
   const defaultSettings = {
     notify: true,
@@ -43,8 +50,16 @@
         -ms-user-select: text !important;
         user-select: text !important;
         -webkit-touch-callout: default !important;
+        pointer-events: auto !important;
       }
       body {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+        pointer-events: auto !important;
+      }
+      html {
         -webkit-user-select: text !important;
         -moz-user-select: text !important;
         -ms-user-select: text !important;
@@ -56,48 +71,81 @@
     if (!document.getElementById('markdown-copy-enable-selection')) {
       document.head.appendChild(style);
       
-      // Remove after a short delay (cleanup)
+      // Remove after a longer delay for better compatibility
       setTimeout(() => {
         const elem = document.getElementById('markdown-copy-enable-selection');
         if (elem) elem.remove();
-      }, 5000);
+      }, 10000);
     }
     
     // 2. Remove event listeners that block copy/selection
-    // Store references to allow removal
-    const events = ['copy', 'cut', 'contextmenu', 'selectstart', 'mousedown', 'mouseup', 'keydown', 'keyup'];
+    const events = ['copy', 'cut', 'contextmenu', 'selectstart', 'mousedown', 'mouseup', 'keydown', 'keyup', 'dragstart'];
     
-    // Remove inline event handlers
-    document.body.oncopy = null;
-    document.body.oncut = null;
-    document.body.onselectstart = null;
-    document.body.oncontextmenu = null;
-    document.oncopy = null;
-    document.oncut = null;
-    document.onselectstart = null;
-    document.oncontextmenu = null;
+    // Remove inline event handlers from multiple targets
+    const targets = [document, document.body, document.documentElement];
+    targets.forEach(target => {
+      if (target) {
+        target.oncopy = null;
+        target.oncut = null;
+        target.onselectstart = null;
+        target.oncontextmenu = null;
+        target.onmousedown = null;
+        target.onmouseup = null;
+        target.ondragstart = null;
+        target.onkeydown = null;
+        target.onkeyup = null;
+      }
+    });
     
     // Remove event listeners from common blocking elements
-    const blockingElements = document.querySelectorAll('[oncopy], [oncut], [onselectstart], [oncontextmenu]');
+    const blockingElements = document.querySelectorAll('[oncopy], [oncut], [onselectstart], [oncontextmenu], [ondragstart]');
     blockingElements.forEach(el => {
       el.oncopy = null;
       el.oncut = null;
       el.onselectstart = null;
       el.oncontextmenu = null;
+      el.ondragstart = null;
+      el.onmousedown = null;
+      el.onmouseup = null;
     });
     
     // 3. Override common anti-copy functions
-    // Some sites use these to detect and prevent selection
     try {
+      // Protect getSelection
       if (window.getSelection) {
         const originalGetSelection = window.getSelection;
-        // Ensure getSelection always works
         window.getSelection = function() {
           return originalGetSelection.call(window);
         };
       }
+      
+      // Override addEventListener to prevent new copy blockers
+      const originalAddEventListener = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function(type, listener, options) {
+        // Allow our extension's listeners but block copy-prevention listeners
+        if (['copy', 'cut', 'selectstart', 'contextmenu'].includes(type)) {
+          // Check if this is likely a blocking listener
+          const listenerStr = listener.toString();
+          if (listenerStr.includes('preventDefault') || 
+              listenerStr.includes('return false') ||
+              listenerStr.includes('stopPropagation')) {
+            console.log('Blocked copy-prevention listener for:', type);
+            return; // Don't add the blocking listener
+          }
+        }
+        return originalAddEventListener.call(this, type, listener, options);
+      };
     } catch (e) {
-      console.log('Could not override getSelection:', e);
+      console.log('Could not override functions:', e);
+    }
+    
+    // 4. Force enable text selection using attributes
+    try {
+      document.body.setAttribute('unselectable', 'off');
+      document.body.setAttribute('onselectstart', 'return true;');
+      document.documentElement.setAttribute('unselectable', 'off');
+    } catch (e) {
+      console.log('Could not set attributes:', e);
     }
   }
 

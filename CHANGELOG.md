@@ -5,6 +5,106 @@ All notable changes to the Markdown Copy extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2025-11-03
+
+### 🐛 Bug Fixes & Enhanced Bypass
+
+This release fixes duplicate content script loading and significantly enhances copy restriction bypass capabilities, especially for sites like CSDN.
+
+### 🐛 Fixed
+
+#### Duplicate Script Loading
+- **Problem**: Content script was loading multiple times (5+ instances)
+  - Caused conflicts and console spam
+  - "Markdown Copy content script loaded" appeared repeatedly
+  - Multiple event listeners interfering with each other
+
+- **Solution**: Added initialization guard
+  ```javascript
+  if (window.__markdownCopyInitialized) {
+    return; // Skip duplicate load
+  }
+  window.__markdownCopyInitialized = true;
+  ```
+
+- **Result**: Script now loads exactly once per page
+  - Clean console output
+  - No conflicts
+  - Better performance
+
+### 🚀 Enhancements
+
+#### Stronger Copy Restriction Bypass
+- **Enhanced CSS Override**:
+  - Added `pointer-events: auto !important` to prevent click blocking
+  - Extended to `html` element for complete coverage
+  - Increased cleanup delay from 5s to 10s for better compatibility
+
+- **More Event Handlers Removed**:
+  - Added `ondragstart` removal
+  - Added `onmousedown/onmouseup` removal
+  - Now covers `document`, `document.body`, and `document.documentElement`
+
+- **addEventListener Override** (NEW):
+  ```javascript
+  // Blocks new copy-prevention listeners from being added
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (['copy', 'cut', 'selectstart', 'contextmenu'].includes(type)) {
+      if (listener includes 'preventDefault') {
+        return; // Block it
+      }
+    }
+    // Allow legitimate listeners
+  };
+  ```
+
+- **Attribute-based Protection**:
+  - Sets `unselectable="off"` on body and documentElement
+  - Sets `onselectstart="return true;"` to force enable selection
+
+### 🎯 Specific Improvements for CSDN
+
+CSDN uses multiple layers of copy protection:
+1. ✅ CSS `user-select: none` → Overridden
+2. ✅ JavaScript event listeners → Removed
+3. ✅ Dynamic listener injection → Blocked via addEventListener override
+4. ✅ Multiple script executions → Prevented duplicate loading
+
+### 🔧 Technical Details
+
+#### Before (v1.0.6)
+- Content script loaded 5+ times
+- Basic CSS override (5s duration)
+- Event handlers removed once
+- New blockers could be added after initialization
+
+#### After (v1.0.7)
+- Content script loads exactly once
+- Enhanced CSS override (10s duration)
+- Multiple targets for event handler removal
+- addEventListener override prevents new blockers
+- Attribute-based fallback protection
+
+### 📊 Compatibility Improvements
+
+**Now works better on:**
+- ✅ CSDN articles
+- ✅ Sites with dynamic content loading
+- ✅ Sites that inject copy blockers after page load
+- ✅ Sites using multiple protection layers
+- ✅ Sites with `pointer-events: none`
+
+### 🧪 Testing
+
+Verified fixes on problematic sites:
+- ✅ CSDN.net - Multiple script loads resolved
+- ✅ Copy restrictions bypassed successfully
+- ✅ No console errors or warnings
+- ✅ Clean initialization
+- ✅ Stable performance
+
+---
+
 ## [1.0.6] - 2025-11-03
 
 ### 🔓 Bypass Copy Restrictions
@@ -617,6 +717,7 @@ This release is designed for:
 
 | Version | Date | Status | Highlights |
 |---------|------|--------|------------|
+| 1.0.7 | 2025-11-03 | 🟢 Released | Fix duplicate loading, enhanced bypass (CSDN support) |
 | 1.0.6 | 2025-11-03 | 🟢 Released | Bypass copy restrictions - CSS & JS event blocking removal |
 | 1.0.5 | 2025-11-03 | 🟢 Released | Perfect Wikipedia math - clean LaTeX without wrappers |
 | 1.0.4 | 2025-11-03 | 🟢 Released | PING-PONG verification, ~99% reliability, Wikipedia math fix |
