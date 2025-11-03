@@ -165,7 +165,13 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.7 (Latest)
+### Version 1.0.8 (Latest)
+- 🚀 **Force Select Mode** - Automatically select and extract content even when selection is blocked
+- 🎯 **CSDN-Specific Support** - Added CSDN-specific content selectors
+- ⏰ **Auto-Enable Selection** - Periodically re-apply selection bypass every 3 seconds
+- 💪 **Ultimate Bypass** - Works even on the most restricted sites
+
+### Version 1.0.7
 - 🐛 **Fix Duplicate Loading** - Prevent content script from loading multiple times
 - 💪 **Enhanced Bypass** - Stronger copy restriction bypass for CSDN and similar sites
 - 🛡️ Block new copy-prevention listeners with addEventListener override

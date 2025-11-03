@@ -150,14 +150,96 @@
   }
 
   /**
+   * Force select element and get its HTML (for heavily restricted sites)
+   */
+  function forceSelectAndExtract() {
+    try {
+      // Try to find the main content area (including CSDN-specific selectors)
+      const contentSelectors = [
+        '#content_views',           // CSDN article content
+        '.blog-content-box',        // CSDN blog content
+        'article',
+        '[role="main"]',
+        '.article-content',
+        '.markdown_views',          // CSDN markdown content
+        '.htmledit_views',          // CSDN HTML content
+        '.content',
+        '#content',
+        '.markdown-body',
+        '.post-content',
+        '.entry-content',
+        'main',
+        '.main-content'
+      ];
+      
+      let contentElement = null;
+      for (const selector of contentSelectors) {
+        contentElement = document.querySelector(selector);
+        if (contentElement) {
+          console.log('Found content element:', selector);
+          break;
+        }
+      }
+      
+      if (!contentElement) {
+        console.log('No specific content element found, using body');
+        // Fallback: try to get any visible text content
+        contentElement = document.body;
+      }
+      
+      // Create a range that selects the content
+      const range = document.createRange();
+      range.selectNodeContents(contentElement);
+      
+      // Force the selection
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      console.log('Forced selection applied');
+      
+      // Extract HTML
+      const html = selectionRangeToHTML(range);
+      
+      // Clear the selection after extraction
+      setTimeout(() => {
+        try {
+          selection.removeAllRanges();
+        } catch (e) {
+          // Ignore errors when clearing selection
+        }
+      }, 100);
+      
+      return html;
+    } catch (e) {
+      console.error('Force select failed:', e);
+      return "";
+    }
+  }
+
+  /**
    * Get HTML string from current selection
    */
   function getSelectionHTML() {
     // Try to enable selection first (bypass restrictions)
     enableSelection();
     
-    const selection = window.getSelection && window.getSelection();
-    if (!selection || selection.rangeCount === 0) return "";
+    let selection = window.getSelection && window.getSelection();
+    
+    // If no selection or selection is collapsed, try to force select main content
+    if (!selection || selection.rangeCount === 0 || 
+        (selection.rangeCount > 0 && selection.getRangeAt(0).collapsed)) {
+      
+      console.log('No valid selection detected, attempting force select...');
+      
+      // Try to force select the main content
+      const forcedHTML = forceSelectAndExtract();
+      if (forcedHTML) {
+        return forcedHTML;
+      }
+      
+      return "";
+    }
     
     const range = selection.getRangeAt(0);
     if (range.collapsed) return "";
@@ -594,6 +676,21 @@
     
     return false;
   });
+
+  // Auto-enable selection on page load for heavily restricted sites
+  // This ensures users can select text even before using the extension
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(enableSelection, 500);
+    });
+  } else {
+    setTimeout(enableSelection, 500);
+  }
+  
+  // Re-enable selection periodically for sites that keep re-applying restrictions
+  setInterval(() => {
+    enableSelection();
+  }, 3000);
 
   console.log("Markdown Copy content script loaded");
 })();
