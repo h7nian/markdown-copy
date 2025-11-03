@@ -165,7 +165,14 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.2 (Latest)
+### Version 1.0.3 (Latest)
+- 🔧 **Improved Error Handling** - Better content script injection with 3x retry logic
+- 🔧 Extended wait time (800ms) for script initialization
+- 🛡️ URL validation to detect restricted pages (chrome://, edge://, etc.)
+- 📢 User-friendly error notifications
+- 🧹 Code refactoring with helper functions
+
+### Version 1.0.2
 - 🧮 **Math Formula Support** - Auto-detect and convert MathJax, KaTeX, MathML formulas
 - 🧮 ChatGPT/Claude math expressions support
 - 🧮 Clean LaTeX output (`$...$`, `$$...$$`)
@@ -174,7 +181,6 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 - 🔧 Fixed: Copy issues on complex sites (ChatGPT, etc.)
 - 🔧 Fixed: iframe content support with `all_frames: true`
 - 🔧 Enhanced: Dynamic content script injection with retry logic
-- 📚 Added: TROUBLESHOOTING.md guide
 
 ### Version 1.0.0 (Initial Release)
 - ✨ Right-click context menu integration

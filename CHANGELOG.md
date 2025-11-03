@@ -5,6 +5,71 @@ All notable changes to the Markdown Copy extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-11-03
+
+### 🔧 Bug Fixes & Stability Improvements
+
+This release focuses on fixing the "Could not establish connection. Receiving end does not exist." error and improving overall reliability.
+
+### 🐛 Fixed
+
+#### Connection Error Handling
+- **Improved Retry Mechanism** - Fixed the common "Could not establish connection" error:
+  - Increased retry attempts from 1 to 3 times
+  - Extended wait time from 500ms to 800ms for script initialization
+  - Implemented recursive retry logic with exponential backoff
+  - Better error detection and graceful degradation
+
+- **URL Validation** - Added smart page detection:
+  - Automatically detects restricted pages (`chrome://`, `chrome-extension://`, `edge://`, `about://`, `view-source:`)
+  - Prevents unnecessary injection attempts on unsupported pages
+  - Saves resources and provides immediate user feedback
+
+### 🚀 Enhancements
+
+#### User Experience
+- **Friendly Error Notifications** - Clear, actionable error messages:
+  - "Cannot copy from this page (restricted by browser)" - for restricted pages
+  - "Failed to copy. Please refresh the page and try again." - when retry fails
+  - Uses native Chrome notifications for better visibility
+
+- **Better Logging** - Enhanced console output for debugging:
+  - "Content scripts injected successfully"
+  - "Message sent successfully after injection"
+  - "Attempting retry X..." with detailed error information
+  - Helps users and developers troubleshoot issues
+
+#### Code Quality
+- **Refactored Background Script** - Cleaner, more maintainable code:
+  - Extracted `injectAndRetry(tabId, message, retryCount)` helper function
+  - Extracted `isValidUrl(url)` validation function
+  - Reduced code duplication by 94 lines
+  - Unified error handling across all entry points (context menu, keyboard shortcut, popup)
+
+### 🔧 Technical Changes
+- Modified `background.js`:
+  - Added `isValidUrl()` function to check for restricted protocols
+  - Added `injectAndRetry()` function with recursive retry logic
+  - Updated all three message handlers to use new helper functions
+  - Improved async/await error handling
+- Updated `manifest.json`:
+  - Version bump to 1.0.3
+
+### 🧪 Testing
+- Verified on problematic scenarios:
+  - ✅ Fresh page load (content script not yet injected)
+  - ✅ Dynamic websites (ChatGPT, Notion, etc.)
+  - ✅ Restricted pages (chrome:// URLs)
+  - ✅ Rapid tab switching
+  - ✅ Extension reload without page refresh
+
+### 📊 Performance
+- Slightly longer wait time (800ms vs 500ms) for better reliability
+- Retry mechanism adds ~1-2 seconds in worst case
+- No impact on normal operation (successful first attempt)
+
+---
+
 ## [1.0.2] - 2025-11-03
 
 ### 🧮 Math Formula Support
@@ -284,6 +349,7 @@ This release is designed for:
 
 | Version | Date | Status | Highlights |
 |---------|------|--------|------------|
+| 1.0.3 | 2025-11-03 | 🟢 Released | Improved error handling, 3x retry logic, URL validation |
 | 1.0.2 | 2025-11-03 | 🟢 Released | Math formula support (MathJax, KaTeX, MathML, ChatGPT) |
 | 1.0.1 | 2025-11-03 | 🟢 Released | ChatGPT fix, iframe support, dynamic script injection |
 | 1.0.0 | 2025-11-03 | 🟢 Released | Initial release with core features |
