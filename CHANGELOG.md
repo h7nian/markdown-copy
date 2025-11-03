@@ -5,6 +5,119 @@ All notable changes to the Markdown Copy extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-11-03
+
+### 🔓 Bypass Copy Restrictions
+
+This release adds the ability to bypass common website copy restrictions, allowing you to copy content from protected websites.
+
+### ✨ Added
+
+#### Copy Restriction Bypass
+- **CSS Override** - Automatically removes `user-select: none` and similar CSS restrictions
+- **Event Handler Removal** - Disables JavaScript event listeners that block copying:
+  - `oncopy`, `oncut` - Prevent copy operations
+  - `onselectstart` - Prevent text selection
+  - `oncontextmenu` - Block right-click menu
+  - `onmousedown`, `onmouseup` - Interfere with selection
+  - `onkeydown`, `onkeyup` - Block keyboard shortcuts
+- **Auto-Cleanup** - Temporarily adds bypass CSS and removes it after 5 seconds
+
+### 🛡️ How It Works
+
+#### 1. CSS Bypass
+```css
+* {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+```
+
+#### 2. JavaScript Event Removal
+- Removes inline event handlers (`oncopy`, `oncut`, etc.)
+- Finds elements with copy-blocking attributes
+- Nullifies all blocking event handlers
+
+#### 3. Function Override Protection
+- Ensures `window.getSelection()` always works
+- Prevents sites from detecting or blocking selection
+
+### 🎯 Works On
+
+This bypass works on websites that use:
+- ✅ `user-select: none` CSS
+- ✅ `-webkit-user-select: none`
+- ✅ `document.oncopy = function(e) { e.preventDefault(); }`
+- ✅ `addEventListener('copy', ...)` with `preventDefault()`
+- ✅ `onselectstart` handlers
+- ✅ Right-click menu blocking
+- ✅ Keyboard shortcut blocking (Ctrl+C, Cmd+C)
+
+### 📊 Examples
+
+**Common Copy-Protected Sites:**
+- News websites with paywalls
+- Academic journals
+- Documentation sites
+- Medium articles (sometimes)
+- Certain blog platforms
+- Educational content sites
+
+### 🔧 Technical Details
+
+#### Trigger Points
+- Called automatically when `getSelectionHTML()` is invoked
+- Activates before attempting to copy
+- No user configuration needed - works automatically
+
+#### Implementation
+```javascript
+function enableSelection() {
+  // 1. Inject CSS to override user-select
+  // 2. Remove document.body event handlers
+  // 3. Find and remove element-specific handlers
+  // 4. Protect getSelection() function
+  // 5. Auto-cleanup after 5 seconds
+}
+```
+
+### ⚠️ Important Notes
+
+#### Ethical Use
+- This feature is for personal use and accessibility
+- Respect copyright and terms of service
+- Don't use to violate content creators' rights
+- Intended for legitimate use cases (research, accessibility, etc.)
+
+#### Limitations
+- Cannot bypass DRM or encrypted content
+- Cannot access content not rendered in the DOM
+- May not work on very sophisticated protection systems
+- Respects browser security policies
+
+### 🧪 Testing
+
+Verified on various copy-protected scenarios:
+- ✅ Sites with `user-select: none`
+- ✅ Sites with `oncopy` handlers
+- ✅ Sites with `contextmenu` blocking
+- ✅ Sites with complex JavaScript protection
+- ✅ Mixed CSS + JavaScript restrictions
+
+### 💡 Use Cases
+
+**Legitimate Use Cases:**
+- Copying for personal notes and research
+- Accessibility (screen readers, text-to-speech)
+- Translating content
+- Quoting for academic purposes
+- Backing up your own content
+- Educational purposes
+
+---
+
 ## [1.0.5] - 2025-11-03
 
 ### 🧮 Perfect Wikipedia Math Formula Support
@@ -504,6 +617,7 @@ This release is designed for:
 
 | Version | Date | Status | Highlights |
 |---------|------|--------|------------|
+| 1.0.6 | 2025-11-03 | 🟢 Released | Bypass copy restrictions - CSS & JS event blocking removal |
 | 1.0.5 | 2025-11-03 | 🟢 Released | Perfect Wikipedia math - clean LaTeX without wrappers |
 | 1.0.4 | 2025-11-03 | 🟢 Released | PING-PONG verification, ~99% reliability, Wikipedia math fix |
 | 1.0.3 | 2025-11-03 | 🟢 Released | Improved error handling, 3x retry logic, URL validation |

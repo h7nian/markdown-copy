@@ -165,7 +165,13 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.5 (Latest)
+### Version 1.0.6 (Latest)
+- 🔓 **Bypass Copy Restrictions** - Overcome CSS and JavaScript copy/selection blocks
+- 🎯 Remove `user-select: none` CSS restrictions
+- ✨ Disable copy/contextmenu event listeners
+- 💪 Works on protected content websites
+
+### Version 1.0.5
 - 🧮 **Perfect Wikipedia Math** - Clean LaTeX extraction without `{\displaystyle ...}` wrapper
 - 🎯 Dedicated Wikipedia math formula handler
 - ✨ Proper inline vs display mode detection

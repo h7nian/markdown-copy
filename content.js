@@ -30,9 +30,84 @@
   }
 
   /**
+   * Enable text selection on the page (bypass copy restrictions)
+   */
+  function enableSelection() {
+    // 1. Remove CSS that prevents selection
+    const style = document.createElement('style');
+    style.id = 'markdown-copy-enable-selection';
+    style.textContent = `
+      * {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+        -webkit-touch-callout: default !important;
+      }
+      body {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+    `;
+    
+    // Only add if not already present
+    if (!document.getElementById('markdown-copy-enable-selection')) {
+      document.head.appendChild(style);
+      
+      // Remove after a short delay (cleanup)
+      setTimeout(() => {
+        const elem = document.getElementById('markdown-copy-enable-selection');
+        if (elem) elem.remove();
+      }, 5000);
+    }
+    
+    // 2. Remove event listeners that block copy/selection
+    // Store references to allow removal
+    const events = ['copy', 'cut', 'contextmenu', 'selectstart', 'mousedown', 'mouseup', 'keydown', 'keyup'];
+    
+    // Remove inline event handlers
+    document.body.oncopy = null;
+    document.body.oncut = null;
+    document.body.onselectstart = null;
+    document.body.oncontextmenu = null;
+    document.oncopy = null;
+    document.oncut = null;
+    document.onselectstart = null;
+    document.oncontextmenu = null;
+    
+    // Remove event listeners from common blocking elements
+    const blockingElements = document.querySelectorAll('[oncopy], [oncut], [onselectstart], [oncontextmenu]');
+    blockingElements.forEach(el => {
+      el.oncopy = null;
+      el.oncut = null;
+      el.onselectstart = null;
+      el.oncontextmenu = null;
+    });
+    
+    // 3. Override common anti-copy functions
+    // Some sites use these to detect and prevent selection
+    try {
+      if (window.getSelection) {
+        const originalGetSelection = window.getSelection;
+        // Ensure getSelection always works
+        window.getSelection = function() {
+          return originalGetSelection.call(window);
+        };
+      }
+    } catch (e) {
+      console.log('Could not override getSelection:', e);
+    }
+  }
+
+  /**
    * Get HTML string from current selection
    */
   function getSelectionHTML() {
+    // Try to enable selection first (bypass restrictions)
+    enableSelection();
+    
     const selection = window.getSelection && window.getSelection();
     if (!selection || selection.rangeCount === 0) return "";
     
