@@ -112,6 +112,18 @@
       replacement: function (content, node) {
         const src = node.getAttribute("src") || "";
         let alt = node.getAttribute("alt") || node.getAttribute("title") || "";
+        
+        // Skip math formula images (Wikipedia and similar sites)
+        // These are rendered versions of LaTeX and should be ignored
+        if (alt.includes("\\displaystyle") || 
+            alt.includes("\\textstyle") ||
+            alt.startsWith("{\\displaystyle") ||
+            alt.includes("\\operatorname") ||
+            src.includes("/math/render/") ||
+            src.includes("wikimedia.org/api/rest_v1/media/math/")) {
+          return ""; // Skip this image, the LaTeX is already captured
+        }
+        
         alt = alt.replace(/\]/g, "\\]");
         return src ? `![${alt}](${src})` : "";
       }
@@ -402,10 +414,20 @@
   }
 
   // Listen for messages from background script or popup
-  chrome.runtime.onMessage.addListener((msg, _sender, _sendResponse) => {
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg && msg.type === "PING") {
+      // Respond to ping immediately to confirm content script is loaded
+      sendResponse({ status: "ready" });
+      return true; // Keep channel open for async response
+    }
+    
     if (msg && msg.type === "COPY_MARKDOWN") {
       handleCopy();
+      sendResponse({ status: "ok" });
+      return true;
     }
+    
+    return false;
   });
 
   console.log("Markdown Copy content script loaded");

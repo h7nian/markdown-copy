@@ -165,7 +165,12 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.3 (Latest)
+### Version 1.0.4 (Latest)
+- 🐛 **Fixed Duplicate Math Formulas** - Skip Wikipedia math formula images
+- 🧮 Prevents duplicate LaTeX and image output
+- 🧹 Smart detection of math rendering images
+
+### Version 1.0.3
 - 🔧 **Improved Error Handling** - Better content script injection with 3x retry logic
 - 🔧 Extended wait time (800ms) for script initialization
 - 🛡️ URL validation to detect restricted pages (chrome://, edge://, etc.)

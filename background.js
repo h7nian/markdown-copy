@@ -20,11 +20,33 @@ function isValidUrl(url) {
   return !blockedProtocols.some(protocol => url.startsWith(protocol));
 }
 
+// Helper function to check if content script is ready
+async function pingContentScript(tabId, maxAttempts = 5) {
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const response = await chrome.tabs.sendMessage(tabId, { type: "PING" });
+      if (response && response.status === "ready") {
+        console.log(`Content script ready (attempt ${i + 1})`);
+        return true;
+      }
+    } catch (err) {
+      console.log(`Ping attempt ${i + 1} failed:`, err.message);
+      if (i < maxAttempts - 1) {
+        // Wait progressively longer: 200ms, 400ms, 600ms, 800ms, 1000ms
+        await new Promise(resolve => setTimeout(resolve, 200 * (i + 1)));
+      }
+    }
+  }
+  return false;
+}
+
 // Helper function to inject content scripts and retry message
 async function injectAndRetry(tabId, message, retryCount = 0) {
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 3;
   
   try {
+    console.log(`Injecting content scripts (attempt ${retryCount + 1})...`);
+    
     // Inject all required scripts
     await chrome.scripting.executeScript({
       target: { tabId: tabId, allFrames: true },
@@ -36,50 +58,62 @@ async function injectAndRetry(tabId, message, retryCount = 0) {
       ]
     });
     
-    console.log("Content scripts injected successfully");
+    console.log("Content scripts injected, checking if ready...");
     
-    // Wait a bit longer for scripts to initialize
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Wait for content script to be fully loaded and ready
+    const isReady = await pingContentScript(tabId);
     
-    // Retry sending the message
+    if (!isReady) {
+      throw new Error("Content script not responding to ping");
+    }
+    
+    // Now send the actual message
     try {
       await chrome.tabs.sendMessage(tabId, message);
       console.log("Message sent successfully after injection");
       return true;
-    } catch (retryErr) {
-      console.error(`Retry ${retryCount + 1} failed:`, retryErr);
-      
-      if (retryCount < MAX_RETRIES) {
-        console.log(`Attempting retry ${retryCount + 2}...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return injectAndRetry(tabId, message, retryCount + 1);
-      }
-      
-      // Show user-friendly error notification
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/128.png',
-        title: 'Markdown Copy',
-        message: 'Failed to copy. Please refresh the page and try again.',
-        priority: 2
-      });
-      
-      return false;
+    } catch (sendErr) {
+      console.error(`Send message failed:`, sendErr);
+      throw sendErr;
     }
-  } catch (injectErr) {
-    console.error("Failed to inject content script:", injectErr);
+    
+  } catch (err) {
+    console.error(`Injection attempt ${retryCount + 1} failed:`, err);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retrying injection (${retryCount + 2}/${MAX_RETRIES + 1})...`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return injectAndRetry(tabId, message, retryCount + 1);
+    }
+    
+    // All retries failed
+    console.error("All injection attempts failed");
     
     // Check if it's a restricted page
-    const tab = await chrome.tabs.get(tabId);
-    if (tab && !isValidUrl(tab.url)) {
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/128.png',
-        title: 'Markdown Copy',
-        message: 'Cannot copy from this page (restricted by browser).',
-        priority: 2
-      });
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab && !isValidUrl(tab.url)) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icons/128.png',
+          title: 'Markdown Copy',
+          message: 'Cannot copy from this page (restricted by browser).',
+          priority: 2
+        });
+        return false;
+      }
+    } catch (tabErr) {
+      console.error("Failed to get tab info:", tabErr);
     }
+    
+    // Show user-friendly error notification
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/128.png',
+      title: 'Markdown Copy',
+      message: 'Failed to copy. Please refresh the page and try again.',
+      priority: 2
+    });
     
     return false;
   }
@@ -103,17 +137,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   
   const message = { type: "COPY_MARKDOWN", source: "contextMenu" };
   
-  try {
-    // Try to send message to content script
-    await chrome.tabs.sendMessage(tab.id, message);
-    console.log("Message sent successfully (context menu)");
-  } catch (err) {
-    console.error("Failed to send message to content script:", err);
-    console.log("Attempting to inject content scripts...");
-    
-    // If content script is not loaded, inject and retry
-    await injectAndRetry(tab.id, message);
+  // First, check if content script is already loaded
+  const isReady = await pingContentScript(tab.id, 2); // Quick 2-attempt ping
+  
+  if (isReady) {
+    // Content script is ready, send message directly
+    try {
+      await chrome.tabs.sendMessage(tab.id, message);
+      console.log("Message sent successfully (context menu)");
+      return;
+    } catch (err) {
+      console.error("Send failed despite ping success:", err);
+    }
   }
+  
+  // Content script not ready or send failed, inject and retry
+  console.log("Content script not ready, injecting...");
+  await injectAndRetry(tab.id, message);
 });
 
 // Handle keyboard shortcut commands
@@ -137,17 +177,23 @@ chrome.commands.onCommand.addListener(async (command) => {
     
     const message = { type: "COPY_MARKDOWN", source: "command" };
     
-    try {
-      // Try to send message to content script
-      await chrome.tabs.sendMessage(tab.id, message);
-      console.log("Message sent successfully (keyboard shortcut)");
-    } catch (err) {
-      console.error("Failed to send message to content script:", err);
-      console.log("Attempting to inject content scripts...");
-      
-      // If content script is not loaded, inject and retry
-      await injectAndRetry(tab.id, message);
+    // First, check if content script is already loaded
+    const isReady = await pingContentScript(tab.id, 2); // Quick 2-attempt ping
+    
+    if (isReady) {
+      // Content script is ready, send message directly
+      try {
+        await chrome.tabs.sendMessage(tab.id, message);
+        console.log("Message sent successfully (keyboard shortcut)");
+        return;
+      } catch (err) {
+        console.error("Send failed despite ping success:", err);
+      }
     }
+    
+    // Content script not ready or send failed, inject and retry
+    console.log("Content script not ready, injecting...");
+    await injectAndRetry(tab.id, message);
   }
 });
 
@@ -178,19 +224,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       
       const msg = { type: "COPY_MARKDOWN", source: "popup" };
       
-      try {
-        // Try to send message to content script
-        await chrome.tabs.sendMessage(tab.id, msg);
-        console.log("Message sent successfully (popup)");
-        sendResponse({ success: true });
-      } catch (err) {
-        console.error("Failed to send message to content script:", err);
-        console.log("Attempting to inject content scripts...");
-        
-        // If content script is not loaded, inject and retry
-        const result = await injectAndRetry(tab.id, msg);
-        sendResponse({ success: result });
+      // First, check if content script is already loaded
+      const isReady = await pingContentScript(tab.id, 2); // Quick 2-attempt ping
+      
+      if (isReady) {
+        // Content script is ready, send message directly
+        try {
+          await chrome.tabs.sendMessage(tab.id, msg);
+          console.log("Message sent successfully (popup)");
+          sendResponse({ success: true });
+          return;
+        } catch (err) {
+          console.error("Send failed despite ping success:", err);
+        }
       }
+      
+      // Content script not ready or send failed, inject and retry
+      console.log("Content script not ready, injecting...");
+      const result = await injectAndRetry(tab.id, msg);
+      sendResponse({ success: result });
     })();
     return true; // Keep message channel open for async response
   }
