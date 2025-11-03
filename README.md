@@ -165,7 +165,14 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.8 (Latest)
+### Version 1.0.9 (Latest)
+- 🎯 **Smart Content Detection** - Intelligently finds article content with text length validation (>200 chars)
+- 🔍 **Largest Container Fallback** - Finds largest text container when selectors fail, avoiding ads/navigation
+- 👤 **Respect User Selection** - Prioritizes user's manual selection over auto-select
+- 🐛 **Fix Duplicate Loading** - More robust initialization guard using `window.top`
+- 🚀 **Better CSDN Support** - More selectors and smarter content detection
+
+### Version 1.0.8
 - 🚀 **Force Select Mode** - Automatically select and extract content even when selection is blocked
 - 🎯 **CSDN-Specific Support** - Added CSDN-specific content selectors
 - ⏰ **Auto-Enable Selection** - Periodically re-apply selection bypass every 3 seconds

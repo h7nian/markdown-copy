@@ -4,11 +4,12 @@
 (function () {
   'use strict';
 
-  // Prevent multiple initialization
-  if (window.__markdownCopyInitialized) {
+  // Prevent multiple initialization - use a more robust check
+  if (window.top.__markdownCopyInitialized) {
     console.log('Markdown Copy already initialized, skipping duplicate load');
     return;
   }
+  window.top.__markdownCopyInitialized = true;
   window.__markdownCopyInitialized = true;
 
   // Default settings
@@ -156,35 +157,91 @@
     try {
       // Try to find the main content area (including CSDN-specific selectors)
       const contentSelectors = [
-        '#content_views',           // CSDN article content
-        '.blog-content-box',        // CSDN blog content
-        'article',
+        // CSDN specific - try multiple variations
+        '#content_views',
+        'div#content_views',
+        '#article_content',
+        '.blog-content-box',
+        'article.blog-content-box',
+        '.markdown_views',
+        '.htmledit_views',
+        // CSDN main box
+        '#mainBox article',
+        '#mainBox main',
+        // Generic but common
+        'article[id*="content"]',
+        'article[class*="content"]',
+        'div[class*="article-content"]',
+        'div[id*="article"]',
         '[role="main"]',
+        'article',
+        'main article',
+        'main',
         '.article-content',
-        '.markdown_views',          // CSDN markdown content
-        '.htmledit_views',          // CSDN HTML content
         '.content',
         '#content',
         '.markdown-body',
         '.post-content',
         '.entry-content',
-        'main',
         '.main-content'
       ];
       
       let contentElement = null;
+      let foundSelector = '';
+      
+      // Try each selector
       for (const selector of contentSelectors) {
-        contentElement = document.querySelector(selector);
+        const element = document.querySelector(selector);
+        if (element) {
+          // Check if element has substantial text content (>200 chars)
+          const textContent = element.textContent || '';
+          if (textContent.trim().length > 200) {
+            contentElement = element;
+            foundSelector = selector;
+            console.log(`Found content element: "${selector}" with ${textContent.trim().length} characters`);
+            break;
+          }
+        }
+      }
+      
+      // If still not found, find the largest text-containing element
+      if (!contentElement) {
+        console.log('No selector matched, searching for largest text container...');
+        
+        const candidates = document.querySelectorAll('article, main, div[class*="content"], div[id*="content"], section');
+        let maxLength = 0;
+        
+        for (const candidate of candidates) {
+          // Skip elements that are likely ads or navigation
+          const className = (candidate.className || '').toLowerCase();
+          const id = (candidate.id || '').toLowerCase();
+          
+          if (className.includes('ad') || className.includes('banner') ||
+              className.includes('nav') || className.includes('header') ||
+              className.includes('footer') || className.includes('sidebar') ||
+              className.includes('comment') ||
+              id.includes('ad') || id.includes('nav') || id.includes('header') ||
+              id.includes('footer') || id.includes('sidebar')) {
+            continue;
+          }
+          
+          const textLength = (candidate.textContent || '').trim().length;
+          if (textLength > maxLength && textLength > 500) {
+            maxLength = textLength;
+            contentElement = candidate;
+            foundSelector = `largest-container(${textLength} chars)`;
+          }
+        }
+        
         if (contentElement) {
-          console.log('Found content element:', selector);
-          break;
+          console.log(`Using ${foundSelector}`);
         }
       }
       
       if (!contentElement) {
-        console.log('No specific content element found, using body');
-        // Fallback: try to get any visible text content
+        console.log('Still no content found, using body as last resort');
         contentElement = document.body;
+        foundSelector = 'body(fallback)';
       }
       
       // Create a range that selects the content
@@ -196,7 +253,7 @@
       selection.removeAllRanges();
       selection.addRange(range);
       
-      console.log('Forced selection applied');
+      console.log(`Forced selection applied on: ${foundSelector}`);
       
       // Extract HTML
       const html = selectionRangeToHTML(range);
@@ -226,25 +283,29 @@
     
     let selection = window.getSelection && window.getSelection();
     
-    // If no selection or selection is collapsed, try to force select main content
-    if (!selection || selection.rangeCount === 0 || 
-        (selection.rangeCount > 0 && selection.getRangeAt(0).collapsed)) {
-      
-      console.log('No valid selection detected, attempting force select...');
-      
-      // Try to force select the main content
-      const forcedHTML = forceSelectAndExtract();
-      if (forcedHTML) {
-        return forcedHTML;
+    // Check if user has made a valid selection
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (!range.collapsed) {
+        // User has selected something, use that
+        const selectedText = selection.toString().trim();
+        if (selectedText.length > 10) {  // Meaningful selection (>10 chars)
+          console.log(`Using user selection (${selectedText.length} chars)`);
+          return selectionRangeToHTML(range);
+        }
       }
-      
-      return "";
     }
     
-    const range = selection.getRangeAt(0);
-    if (range.collapsed) return "";
+    // No valid user selection, try to force select main content
+    console.log('No valid selection detected, attempting force select...');
     
-    return selectionRangeToHTML(range);
+    // Try to force select the main content
+    const forcedHTML = forceSelectAndExtract();
+    if (forcedHTML) {
+      return forcedHTML;
+    }
+    
+    return "";
   }
 
   /**
@@ -676,21 +737,6 @@
     
     return false;
   });
-
-  // Auto-enable selection on page load for heavily restricted sites
-  // This ensures users can select text even before using the extension
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(enableSelection, 500);
-    });
-  } else {
-    setTimeout(enableSelection, 500);
-  }
-  
-  // Re-enable selection periodically for sites that keep re-applying restrictions
-  setInterval(() => {
-    enableSelection();
-  }, 3000);
 
   console.log("Markdown Copy content script loaded");
 })();
