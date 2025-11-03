@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Copy Settings</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Markdown Copy
+      </h1>
+    </header>
+
+    <main>
+      <section class="settings">
+        <h2>Settings</h2>
+        
+        <div class="setting-item">
+          <label class="switch-label">
+            <input type="checkbox" id="notify" class="switch-input">
+            <span class="switch-slider"></span>
+            <span class="label-text">Show notification after copying</span>
+          </label>
+          <p class="setting-description">Display a toast message when Markdown is copied</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="switch-label">
+            <input type="checkbox" id="autoReadability" class="switch-input">
+            <span class="switch-slider"></span>
+            <span class="label-text">Auto-extract article content</span>
+          </label>
+          <p class="setting-description">If no selection, automatically extract main article content</p>
+        </div>
+
+        <div class="setting-item">
+          <label for="lineBreaks" class="select-label">Line break style:</label>
+          <select id="lineBreaks" class="select-input">
+            <option value="soft">Soft wrap (preserve original)</option>
+            <option value="one-per-paragraph">One line per paragraph</option>
+          </select>
+          <p class="setting-description">How to handle line breaks in paragraphs</p>
+        </div>
+      </section>
+
+      <section class="info">
+        <div class="info-box">
+          <strong>Keyboard Shortcut:</strong>
+          <code>Alt+M</code>
+          <p class="hint">You can customize this at <code>chrome://extensions/shortcuts</code></p>
+        </div>
+
+        <div class="info-box">
+          <strong>How to use:</strong>
+          <ul>
+            <li>Select text on any webpage</li>
+            <li>Right-click → "Copy as Markdown"</li>
+            <li>Or press <code>Alt+M</code></li>
+            <li>Or click the button below</li>
+          </ul>
+        </div>
+      </section>
+
+      <button id="copyNow" class="primary-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy Selection as Markdown
+      </button>
+    </main>
+
+    <footer>
+      <p>Privacy-friendly • 100% local • No data collection</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
