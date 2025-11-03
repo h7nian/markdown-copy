@@ -12,6 +12,12 @@ A powerful, privacy-friendly Chrome extension that converts selected webpage con
 - **🎯 Smart Selection** - Right-click any selected text to convert it to Markdown
 - **⌨️ Keyboard Shortcut** - Quick access with `Alt+M` (customizable)
 - **📄 Article Extraction** - Automatically extract main article content when nothing is selected
+- **🧮 Math Formula Support** - Automatically detect and convert mathematical formulas:
+  - MathJax (inline and display formulas)
+  - KaTeX (LaTeX extraction from annotations)
+  - MathML (converts to LaTeX format)
+  - ChatGPT/Claude math expressions
+  - Outputs standard `$...$` or `$$...$$` format
 - **🎨 GFM Support** - Full GitHub Flavored Markdown support including:
   - Tables with proper formatting
   - Task lists (`- [ ]` and `- [x]`)
@@ -20,6 +26,7 @@ A powerful, privacy-friendly Chrome extension that converts selected webpage con
 - **🔒 Privacy First** - 100% local processing, no data collection, no external API calls
 - **⚡ Fast & Lightweight** - Instant conversion with minimal resource usage
 - **🎛️ Customizable** - Configure line break style and notification preferences
+- **🌐 Universal Compatibility** - Works on complex sites including ChatGPT, Wikipedia, and more
 
 ## 📸 Screenshots
 
@@ -116,6 +123,7 @@ All libraries are bundled locally (no CDN dependencies):
 - **Horizontal rules**
 - **Task lists**
 - **Strikethrough**
+- **Math formulas** (MathJax, KaTeX, MathML, ChatGPT)
 
 ## 🔒 Privacy & Security
 
@@ -156,6 +164,17 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 - [ ] Safari and Firefox versions
 
 ## 📝 Changelog
+
+### Version 1.0.2 (Latest)
+- 🧮 **Math Formula Support** - Auto-detect and convert MathJax, KaTeX, MathML formulas
+- 🧮 ChatGPT/Claude math expressions support
+- 🧮 Clean LaTeX output (`$...$`, `$$...$$`)
+
+### Version 1.0.1
+- 🔧 Fixed: Copy issues on complex sites (ChatGPT, etc.)
+- 🔧 Fixed: iframe content support with `all_frames: true`
+- 🔧 Enhanced: Dynamic content script injection with retry logic
+- 📚 Added: TROUBLESHOOTING.md guide
 
 ### Version 1.0.0 (Initial Release)
 - ✨ Right-click context menu integration

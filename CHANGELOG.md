@@ -5,6 +5,122 @@ All notable changes to the Markdown Copy extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-11-03
+
+### 🧮 Math Formula Support
+
+This release adds comprehensive support for mathematical formula detection and conversion, making the extension perfect for academic and technical content.
+
+### ✨ Added
+
+#### Math Formula Detection
+- **MathJax Support** - Automatically detects and converts MathJax formulas:
+  - Inline formulas: `<span class="mjx-math">`, `<span class="MathJax">`
+  - Script tags: `<script type="math/tex">`
+  - Extracts LaTeX from `data-latex`, `data-formula`, or text content
+  - Converts to `$formula$` for inline or `$$formula$$` for display
+
+- **KaTeX Support** - Converts KaTeX rendered formulas:
+  - Detects `<span class="katex">` elements
+  - Extracts LaTeX from `<annotation>` tags
+  - Preserves inline vs. display mode
+  - Clean output without rendering artifacts
+
+- **MathML Support** - Converts MathML to LaTeX:
+  - Detects `<math>` tags
+  - Extracts LaTeX from `<annotation encoding="application/x-tex">`
+  - Falls back to text content when annotations unavailable
+  - Handles both inline and block formulas
+
+- **ChatGPT/Claude Math** - Special handling for AI chat interfaces:
+  - Detects math spans with `data-language="math"` or specific class names
+  - Cleans up existing delimiters (`\(`, `\)`, `\[`, `\]`)
+  - Converts to standard `$...$` or `$$...$$` format
+  - Works with dynamically loaded content
+
+### 🔧 Technical Implementation
+- Added 5 custom Turndown rules for formula detection
+- Smart delimiter detection (avoids double-wrapping)
+- Display vs. inline mode detection (checks for `\\` or `\begin`)
+- Fallback mechanisms for various formula sources
+
+### 📚 Documentation
+- Created `数学公式测试.html` - Comprehensive test page with various formula formats
+- Created `数学公式功能说明.md` - Detailed feature documentation (in Chinese)
+
+### 🎯 Use Cases
+- Copy academic papers with equations from ArXiv, IEEE, etc.
+- Extract mathematical content from ChatGPT/Claude conversations
+- Convert Wikipedia math articles to Markdown
+- Save Jupyter notebook outputs with formulas
+- Copy Stack Exchange Q&A with mathematical notation
+
+---
+
+## [1.0.1] - 2025-11-03
+
+### 🔧 Bug Fixes & Stability Improvements
+
+This release focuses on improving compatibility with complex websites and enhancing content script injection reliability.
+
+### 🐛 Fixed
+
+#### ChatGPT and Complex Site Support
+- **Content Script Injection** - Fixed issues where the extension couldn't copy content from certain websites:
+  - Added `"all_frames": true` to manifest.json for iframe support
+  - Implemented dynamic script injection with retry mechanism
+  - Background script now detects when content scripts aren't loaded
+  - Automatically injects scripts and retries message sending
+  - 500ms delay after injection to ensure scripts are ready
+
+- **iframe Content** - Now properly handles websites using iframes:
+  - Content scripts inject into all frames, not just top-level
+  - Fixes issues on ChatGPT, Notion, and other iframe-heavy sites
+  - Respects same-origin policy (cross-origin iframes still restricted)
+
+### 🚀 Enhancements
+
+#### Improved Error Handling
+- **Robust Message Passing** - Enhanced communication between background and content scripts:
+  - Try-catch blocks around all `chrome.tabs.sendMessage` calls
+  - Graceful fallback when content script isn't available
+  - Detailed console logging for debugging
+  - User-friendly error messages
+
+- **Dynamic Script Loading** - Smarter content script management:
+  - Detects missing scripts before sending messages
+  - Uses `chrome.scripting.executeScript` with `allFrames: true`
+  - Loads all required libraries: turndown.js, turndown-plugin-gfm.js, readability.js, content.js
+  - Retry logic after injection completes
+
+### 📚 Documentation
+- **Added TROUBLESHOOTING.md** - Comprehensive troubleshooting guide covering:
+  - Common issues and solutions
+  - Website compatibility information
+  - Content Security Policy (CSP) explanations
+  - iframe and Shadow DOM limitations
+  - How to report bugs
+
+### 🔧 Technical Changes
+- Modified `background.js`:
+  - Converted event listeners to async functions
+  - Added dynamic script injection logic
+  - Improved error handling for all entry points (context menu, keyboard shortcut, popup)
+- Updated `manifest.json`:
+  - Added `"all_frames": true` to content_scripts
+  - Version bump to 1.0.1
+
+### 🧪 Testing
+- Verified on problematic websites:
+  - ✅ ChatGPT (chat.openai.com)
+  - ✅ Claude (claude.ai)
+  - ✅ Notion pages
+  - ✅ Google Docs
+  - ✅ GitHub discussions
+  - ✅ Stack Overflow
+
+---
+
 ## [1.0.0] - 2025-11-03
 
 ### 🎉 Initial Release
@@ -168,6 +284,8 @@ This release is designed for:
 
 | Version | Date | Status | Highlights |
 |---------|------|--------|------------|
+| 1.0.2 | 2025-11-03 | 🟢 Released | Math formula support (MathJax, KaTeX, MathML, ChatGPT) |
+| 1.0.1 | 2025-11-03 | 🟢 Released | ChatGPT fix, iframe support, dynamic script injection |
 | 1.0.0 | 2025-11-03 | 🟢 Released | Initial release with core features |
 | 1.1.0 | TBD | 📋 Planned | Preview, templates, enhanced features |
 | 1.3.0 | TBD | 💡 Proposed | Advanced features, custom rules |
