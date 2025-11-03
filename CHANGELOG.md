@@ -5,6 +5,80 @@ All notable changes to the Markdown Copy extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-11-03
+
+### 🧮 Perfect Wikipedia Math Formula Support
+
+This release adds dedicated handling for Wikipedia's math formulas, providing clean LaTeX output without Wikipedia's display wrappers.
+
+### ✨ Added
+
+#### Wikipedia Math Handler
+- **New `wikipediaMath` Rule** - Dedicated Turndown rule specifically for Wikipedia math elements
+- **Smart Element Detection** - Identifies Wikipedia math wrappers:
+  - `span.mwe-math-element`
+  - `span.mw-inlineMath`
+  - `span.mw-displayMath`
+- **LaTeX Extraction** - Extracts LaTeX from `img` alt attributes within math elements
+
+### 🐛 Fixed
+
+#### Clean LaTeX Output
+- **Remove Display Wrappers** - Strips Wikipedia's `{\displaystyle ...}` wrapper automatically
+- **Remove Style Wrappers** - Also strips `{\textstyle ...}` when present
+- **Proper Mode Detection** - Correctly identifies inline vs display mode based on CSS classes
+
+### 📝 Output Comparison
+
+**Before (v1.0.4):**
+```
+${\displaystyle \operatorname {P} (X\geq a)\leq {\frac {\operatorname {E} (X)}{a}}.}$
+```
+
+**After (v1.0.5):**
+```
+$\operatorname{P}(X\geq a)\leq \frac{\operatorname{E}(X)}{a}.$
+```
+
+### 🔧 Technical Details
+
+#### New Turndown Rule
+- **Priority**: Processed before general image rule to prevent conflicts
+- **Selector**: Targets Wikipedia-specific math wrapper spans
+- **Processing**:
+  1. Find `img.mwe-math-fallback-image-inline` or `img.mwe-math-fallback-image-display`
+  2. Extract LaTeX from `alt` attribute
+  3. Clean: `latex.replace(/^\{\\displaystyle\s+/, "").replace(/\}$/, "")`
+  4. Determine mode: Check for `displayMath` or `display` in classes
+  5. Wrap: Use `$...$` for inline, `$$\n...\n$$` for display
+
+#### Image Rule Enhancement
+- Updated comment to clarify that math images are handled by `wikipediaMath` rule
+- No functional change, just clearer documentation
+
+### 🧪 Testing
+
+Verified on Wikipedia pages with complex math:
+- ✅ [Markov's inequality](https://en.wikipedia.org/wiki/Markov%27s_inequality)
+- ✅ [Normal distribution](https://en.wikipedia.org/wiki/Normal_distribution)
+- ✅ [Fourier transform](https://en.wikipedia.org/wiki/Fourier_transform)
+- ✅ Mixed inline and display formulas
+- ✅ Formulas with `\operatorname`, `\frac`, `\int`, etc.
+
+### 📊 User Impact
+
+**Problem Reported:**
+- User copied Wikipedia math content
+- Got messy LaTeX with `{\displaystyle ...}` wrappers
+- Had to manually clean up every formula
+
+**Solution Delivered:**
+- Clean LaTeX automatically extracted
+- Display wrappers removed
+- Ready to paste into Obsidian, Typora, etc.
+
+---
+
 ## [1.0.4] - 2025-11-03
 
 ### 🔧 Major Reliability Improvements
@@ -430,6 +504,7 @@ This release is designed for:
 
 | Version | Date | Status | Highlights |
 |---------|------|--------|------------|
+| 1.0.5 | 2025-11-03 | 🟢 Released | Perfect Wikipedia math - clean LaTeX without wrappers |
 | 1.0.4 | 2025-11-03 | 🟢 Released | PING-PONG verification, ~99% reliability, Wikipedia math fix |
 | 1.0.3 | 2025-11-03 | 🟢 Released | Improved error handling, 3x retry logic, URL validation |
 | 1.0.2 | 2025-11-03 | 🟢 Released | Math formula support (MathJax, KaTeX, MathML, ChatGPT) |

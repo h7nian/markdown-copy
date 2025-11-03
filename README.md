@@ -165,10 +165,15 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 📝 Changelog
 
-### Version 1.0.4 (Latest)
-- 🐛 **Fixed Duplicate Math Formulas** - Skip Wikipedia math formula images
+### Version 1.0.5 (Latest)
+- 🧮 **Perfect Wikipedia Math** - Clean LaTeX extraction without `{\displaystyle ...}` wrapper
+- 🎯 Dedicated Wikipedia math formula handler
+- ✨ Proper inline vs display mode detection
+
+### Version 1.0.4
+- 🔧 **PING-PONG Verification** - ~99% reliability with smart readiness check
+- 🐛 Fixed duplicate math formulas - Skip Wikipedia math formula images
 - 🧮 Prevents duplicate LaTeX and image output
-- 🧹 Smart detection of math rendering images
 
 ### Version 1.0.3
 - 🔧 **Improved Error Handling** - Better content script injection with 3x retry logic

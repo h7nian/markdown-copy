@@ -106,6 +106,48 @@
       }
     });
 
+    // Wikipedia math formula support - must come before general image rule
+    td.addRule("wikipediaMath", {
+      filter: function (node) {
+        // Wikipedia wraps math in specific elements
+        if (node.nodeName === "SPAN") {
+          const className = node.getAttribute("class") || "";
+          return className.includes("mwe-math-element") || 
+                 className.includes("mw-inlineMath") ||
+                 className.includes("mw-displayMath");
+        }
+        return false;
+      },
+      replacement: function (content, node) {
+        // Try to get LaTeX from img alt attribute (Wikipedia's approach)
+        const img = node.querySelector("img.mwe-math-fallback-image-inline, img.mwe-math-fallback-image-display");
+        if (img) {
+          let latex = img.getAttribute("alt") || "";
+          
+          if (latex) {
+            // Clean up Wikipedia's LaTeX wrapping
+            // Remove {\displaystyle ...} or {\textstyle ...} wrapper
+            latex = latex.replace(/^\{\\displaystyle\s+/, "").replace(/\}$/, "");
+            latex = latex.replace(/^\{\\textstyle\s+/, "").replace(/\}$/, "");
+            
+            // Trim whitespace
+            latex = latex.trim();
+            
+            if (!latex) return "";
+            
+            // Determine if display or inline based on class
+            const isDisplay = node.className.includes("displayMath") || 
+                            img.className.includes("display");
+            
+            return isDisplay ? `$$\n${latex}\n$$` : `$${latex}$`;
+          }
+        }
+        
+        // Fallback: if no img found, skip this element (the img rule will handle it)
+        return "";
+      }
+    });
+
     // Enhanced image rule with alt fallback to title
     td.addRule("imageAltFallback", {
       filter: "img",
@@ -121,7 +163,7 @@
             alt.includes("\\operatorname") ||
             src.includes("/math/render/") ||
             src.includes("wikimedia.org/api/rest_v1/media/math/")) {
-          return ""; // Skip this image, the LaTeX is already captured
+          return ""; // Skip this image, LaTeX is handled by wikipediaMath rule
         }
         
         alt = alt.replace(/\]/g, "\\]");
